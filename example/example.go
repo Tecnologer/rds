@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/Clever/rds"
+	_ "github.com/tecnologer/rds"
 )
 
 var secretArn = os.Getenv("SECRET_ARN")
