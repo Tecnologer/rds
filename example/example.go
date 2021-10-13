@@ -3,27 +3,28 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	_ "github.com/tecnologer/rds"
+	"github.com/tecnologer/rds/config"
 )
 
-var secretArn = os.Getenv("SECRET_ARN")
-var resourceArn = os.Getenv("RESOURCE_ARN")
-
 func main() {
-	db, err := sql.Open("rds", fmt.Sprintf(`{
-"SecretArn": "%s",
-"ResourceArn": "%s"
-}`, secretArn, resourceArn))
+	config := &config.Config{
+		SecretArn:   os.Getenv("RDS_SECRET_ARN"),
+		ResourceArn: os.Getenv("RDS_RESOURCE_ARN"),
+	}
+
+	db, err := sql.Open("rds", config.String())
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	if err := db.Ping(); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
+
+	fmt.Println("connected")
 
 	defer db.Close()
 
