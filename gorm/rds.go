@@ -17,6 +17,8 @@ import (
 	"gorm.io/gorm/schema"
 )
 
+var numericPlaceholder = regexp.MustCompile(`\$(\d+)`)
+
 type Dialector struct {
 	*config.Config
 	Conn             *sql.DB
@@ -38,7 +40,7 @@ func New(cfg *config.Config) gorm.Dialector {
 		cfg = config.GetDefaultConfig()
 	}
 
-	return &Dialector{
+	return Dialector{
 		Config:     cfg,
 		DriverName: "rds",
 	}
@@ -126,8 +128,6 @@ func (dialector Dialector) QuoteTo(writer clause.Writer, str string) {
 	}
 	writer.WriteString(`"`)
 }
-
-var numericPlaceholder = regexp.MustCompile("\\$(\\d+)")
 
 func (dialector Dialector) Explain(sql string, vars ...interface{}) string {
 	return logger.ExplainSQL(sql, numericPlaceholder, `'`, vars...)
