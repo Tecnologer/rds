@@ -4,7 +4,6 @@ package rds
 import (
 	"database/sql"
 	"database/sql/driver"
-	"encoding/json"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -21,13 +20,13 @@ var _ driver.Driver = rdsDriver{}
 
 // Open a connection. Parse the URL as a JSON config object.
 func (d rdsDriver) Open(url string) (driver.Conn, error) {
-	var c *config.Config
-	if err := json.Unmarshal([]byte(url), &c); err != nil {
-		return nil, err
+	c, err := config.StringToConfig(url)
+	if err != nil {
+		return nil, errors.Wrap(err, "rds.driver: parse string to config")
 	}
 	sess, err := session.NewSession(&aws.Config{Region: aws.String(c.GetRegion())})
 	if err != nil {
-		return nil, errors.Wrap(err, "rds_driver.Open")
+		return nil, errors.Wrap(err, "rds.driver.Open")
 	}
 
 	rdsAPI := rdsdataservice.New(sess)

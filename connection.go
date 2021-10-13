@@ -2,13 +2,15 @@ package rds
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rdsdataservice"
 	"github.com/aws/aws-sdk-go/service/rdsdataservice/rdsdataserviceiface"
-	errors "golang.org/x/xerrors"
+	"github.com/pkg/errors"
+	"github.com/tecnologer/rds/config"
 )
 
 //go:generate mockgen -package rds -source $PWD/vendor/github.com/aws/aws-sdk-go/service/rdsdataservice/rdsdataserviceiface/interface.go -destination rdsdataservice_mocks_test.go RDSDataServiceAPI
@@ -25,6 +27,32 @@ var _ driver.Conn = &conn{}
 var _ driver.ConnPrepareContext = &conn{}
 var _ driver.QueryerContext = &conn{}
 var _ driver.ExecerContext = &conn{}
+
+//GetConnection returns a RDS connection using the Env Vars configuration
+func GetConnection() (*sql.DB, error) {
+	cnf := config.GetDefaultConfig()
+	db, err := GetConnectionWConfig(cnf)
+	if err != nil {
+		return nil, errors.Wrap(err, "rds.connect: get connection")
+	}
+
+	return db, nil
+
+}
+
+//GetConnectionWConfig returns a RDS connection using the information of the config arg
+func GetConnectionWConfig(cnf *config.Config) (*sql.DB, error) {
+	db, err := sql.Open("rds", cnf.String())
+	if err != nil {
+		return nil, errors.Wrap(err, "rds.connect_with_config: open connection")
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, errors.Wrap(err, "rds.connect_with_config: connection did not respond")
+	}
+
+	return db, nil
+}
 
 // Begin is TODO.
 func (ac *conn) Begin() (driver.Tx, error) {
